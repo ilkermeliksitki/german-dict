@@ -2,6 +2,7 @@ import requests
 from bs4 import BeautifulSoup
 import pandas as pd
 import argparse
+import webbrowser
 
 
 parser = argparse.ArgumentParser()
@@ -33,7 +34,7 @@ print()
 print(the_word, en_translation, sep="\n\n")
 
 if args.pronunciation:
-	print("\n", pronunciation, "\n", sep="")
+	webbrowser.open(pronunciation)
 
 # das Spülbecken
 # sink, rinsing tank, utility sink, settling pit

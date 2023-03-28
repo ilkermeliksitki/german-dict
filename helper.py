@@ -4,7 +4,10 @@ import sys
 
 def left_align_df(df):
     # allign to the left
-    max_length = df.applymap(len).max().max()
+    try:
+        max_length = df.applymap(len).max().max()
+    except:
+        max_length = 12
     df.columns = [col.ljust(max_length) for col in df.columns]
     df = df.apply(lambda x: x.str.ljust(max_length))
     return df
@@ -19,21 +22,29 @@ def get_conjugation(soup):
     if oops:
         sys.stderr.write(opps.text)
         return None
-    d = dict()
+
+    tenses = [
+        "präsens", "präteritum", "imperativ",
+        "konjunktiv i", "konjunktiv ii"
+    ]
+
+    conjugations_dict = dict()
     conj_ls_div = soup.select('div.rAufZu > div.vTbl')
     for div in conj_ls_div:
         h2 = div.select_one("h2")
         if h2:
-            if h2.text.lower() == "präsens": 
+            tense_name = h2.text.lower()
+            if tense_name in tenses:
                 table = str(div.select_one("table"))
                 df = pd.read_html(table)[0]
-                df.columns = ["pronoun", "conjugation"]
-                df.set_index("pronoun", inplace=True)
+                df.columns = ["pronoun", "conjugaiton"]
                 df = left_align_df(df)
-                d["präsens"] = df
-            elif h2.text.lower() == "präteritum":
+                conjugations_dict[tense_name] = df.to_string(index=False)
+            else:
+                continue
         else:
             continue
+    return conjugations_dict
 
 def get_name_and_meanaing_of_verb_conj(soup):
     oops = is_conjugation_found(soup)

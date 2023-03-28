@@ -1,3 +1,6 @@
+sys
 bs4
-pandas
 lxml
+pandas
+argparse
+webbrowser

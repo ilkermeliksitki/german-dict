@@ -43,14 +43,14 @@ genitiv    der Musik    der Musiken
 nominativ  die Musik    die Musiken
 </pre>
 
-Here is one example of the conjugaison of a verb.
+Here is one example of the conjugation of a verb.
 <pre>
 $ german-dict -c spielen
 <span><b>spielen</b></span>
 play, play (against), have a tinge (of), play (with), play opposite, fiddle about (with), fiddle around (with), toy with, be set, enact
 
 <span><b>präsens</b></span>
-pronoun   conjugaiton
+pronoun   conjugation
 ich         spiel(e)⁵
 du          spielst  
 er          spielt   
@@ -59,7 +59,7 @@ ihr         spielt
 sie         spielen  
 
 <span><b>präteritum</b></span>
-pronoun   conjugaiton
+pronoun   conjugation
 ich         spielte  
 du          spieltest
 er          spielte  
@@ -68,7 +68,7 @@ ihr         spieltet
 sie         spielten 
 
 <span><b>imperativ</b></span>
-pronoun      conjugaiton 
+pronoun      conjugation
 -                     NaN
 spiel(e)⁵    (du)        
 -                     NaN
@@ -77,7 +77,7 @@ spielt       (ihr)
 spielen      Sie         
 
 <span><b>konjunktiv i</b></span>
-pronoun  conjugaiton
+pronoun  conjugation
 ich         spiele  
 du          spielest
 er          spiele  
@@ -86,7 +86,7 @@ ihr         spielet
 sie         spielen 
 
 <span><b>konjunktiv ii</b></span>
-pronoun   conjugaiton
+pronoun   conjugation
 ich         spielte  
 du          spieltest
 er          spielte  

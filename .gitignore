@@ -1,1 +1,4 @@
 sources*
+__pycache__
+*.swp
+

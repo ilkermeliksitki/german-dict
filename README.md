@@ -29,7 +29,7 @@ options:
 
 ## Examples
 
-Here is one example for the declension of a word.
+Here is one example for the declension of a noun.
 <pre>
 $ german-dict -d musik
 <span><b>die Musik</b></span>

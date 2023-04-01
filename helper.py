@@ -37,7 +37,7 @@ def get_conjugation(soup):
             if tense_name in tenses:
                 table = str(div.select_one("table"))
                 df = pd.read_html(table)[0]
-                df.columns = ["pronoun", "conjugaiton"]
+                df.columns = ["pronoun", "conjugation"]
                 df = left_align_df(df)
                 conjugations_dict[tense_name] = df.to_string(index=False)
             else:

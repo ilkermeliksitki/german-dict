@@ -39,8 +39,8 @@ if r.status_code == 429:
 soup = BeautifulSoup(r.text, "html.parser")
 
 if args.declension:
-    print(get_name_with_article_dec(soup))
-    print(get_declension_definition(soup), end='\n\n')
+    print(BLUE + get_name_with_article_dec(soup) + RESET)
+    print(RED + get_declension_definition(soup) + RESET, end='\n\n')
     print(get_declension(soup))
 elif args.conjugation:
     name, meaning = get_name_and_meanaing_of_verb_conj(soup)

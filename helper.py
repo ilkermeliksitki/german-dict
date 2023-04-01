@@ -70,6 +70,13 @@ def get_pronunciation_link_dec(soup):
 def get_pronunciation_link_conj(soup):
     pass
 
+def get_declension_definition(soup):
+    div_element = soup.select_one("div.rAbschnitt > div > section > div.rAufZu")
+    span_tag = div_element.select_one("div.rCntr > div > p > span")
+    definitions = span_tag.text.split()
+    definition = " ".join(definitions)
+    return definition
+
 def get_declension(soup):
     # create the related dataframe
     main_element = soup.select_one("p.vGrnd.rCntr")

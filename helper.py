@@ -93,3 +93,12 @@ def get_declension(soup):
     declension_df = left_align_df(declension_df)
 
     return declension_df
+
+def get_name_and_meaning_general(soup):
+    p_element_name = soup.select_one("p.vGrnd.rCntr")
+    name = " ".join(p_element_name.text.strip().split('\n'))
+    p_element_def = soup.select_one("p.r1Zeile.rU3px.rO0px")
+    definition = " ".join(p_element_def.text.strip().split('\n'))
+    p_element_plr = soup.select_one("p.vStm.rCntr")
+    plural = " ".join(p_element_plr.text.strip().split('\n'))
+    return name, definition, plural

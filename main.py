@@ -14,10 +14,7 @@ RESET = "\033[0m"
 
 parser = argparse.ArgumentParser()
 parser.add_argument("word", help="the word that you want to look for.")
-parser.add_argument(
-	"-p", "--pronunciation", help="gives the link for the pronunciation of the word.", 
-	action="store_true"
-)
+parser.add_argument("-p", "--pronunciation", help="gives the link for the pronunciation of the word.", action="store_true")
 group = parser.add_mutually_exclusive_group(required=True)
 group.add_argument("-d", "--declension", help="prints the declension of the word.", action="store_true")
 group.add_argument("-c", "--conjugation", help="prints the conjugation of the word.", action="store_true")

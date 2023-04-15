@@ -47,6 +47,3 @@ def parse_response(response: str) -> List[Tuple[str, str]]:
         parsed_examples.append(parsed_example_tp)
     return parsed_examples
 
-r = get_response()
-ls = parse_response(r)
-print(ls)

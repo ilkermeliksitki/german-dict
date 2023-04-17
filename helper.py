@@ -1,104 +1,73 @@
-import webbrowser
-import pandas as pd
-import sys
+import re
+from bs4 import BeautifulSoup
 
-def left_align_df(df):
-    # allign to the left
-    try:
-        max_length = df.applymap(len).max().max()
-    except:
-        max_length = 12
-    df.columns = [col.ljust(max_length) for col in df.columns]
-    df = df.apply(lambda x: x.str.ljust(max_length))
-    return df
+def parse_word_descriptors(soup: BeautifulSoup):
+    """ parses word descriptors for identifying its name, type,
+        gender (if it exists), regularity, and auxiliary (if it
+        exists)
+    """
+    TYPES = ['noun', 'adjective', 'pronoun']
+    GENDERS = ['masculine', 'feminine', 'neutral']
+    REGULAR = ['regular', 'irregular']
+    AUXILIARY = ['haben', 'sein']
 
-def is_conjugation_found(soup):
-    # return the error not found error message or none.
-    oops = soup.select_one("h2.rCntr")
-    return oops
+    word = soup.select_one("p.vGrnd.rCntr").text.strip()
+    descriptors = soup.select_one("p.rInf").text.strip()
+    # create descriptos list by trimming unnecessary chars.
+    ls = re.findall(r'\b\w+\b', descriptors)
 
-def get_conjugation(soup):
-    oops = is_conjugation_found(soup)
-    if oops:
-        sys.stderr.write(opps.text)
-        return None
+    word_type = 'verb' 
+    for tp in TYPES:
+        if tp in ls:
+            word_type = tp
+            break
 
-    tenses = [
-        "präsens", "präteritum", "imperativ",
-        "konjunktiv i", "konjunktiv ii"
-    ]
+    gender = None
+    for gd in GENDERS:
+        if gd in ls:
+            gender = gd
+            break
 
-    conjugations_dict = dict()
-    conj_ls_div = soup.select('div.rAufZu > div.vTbl')
-    for div in conj_ls_div:
-        h2 = div.select_one("h2")
-        if h2:
-            tense_name = h2.text.lower()
-            if tense_name in tenses:
-                table = str(div.select_one("table"))
-                df = pd.read_html(table)[0]
-                df.columns = ["pronoun", "conjugation"]
-                df = left_align_df(df)
-                conjugations_dict[tense_name] = df.to_string(index=False)
-            else:
-                continue
-        else:
-            continue
-    return conjugations_dict
+    regular = None
+    for rg in REGULAR:
+        if rg in ls:
+            regular = rg
+            break
 
-def get_name_and_meanaing_of_verb_conj(soup):
-    oops = is_conjugation_found(soup)
-    if oops:
-        print(oops.text)
-        return None, None
-    name_p = soup.select_one("p#grundform > b")
-    name = name_p.text
-    meaning_div = soup.select_one("div#vStckKrz > div > p > span")
-    meaning_ls = meaning_div.text.split()
-    meaning = " ".join(meaning_ls)
-    return name, meaning
+    auxiliary = None
+    for ax in AUXILIARY:
+        if ax in ls:
+            auxiliary = ax
+            break
+    return word, word_type, gender, regular, auxiliary
 
-def get_name_with_article_dec(soup):
-    main_element = soup.select_one("p.vGrnd.rCntr")
-    return main_element.text.strip()
 
-def get_pronunciation_link_dec(soup):
-    main_element = soup.select_one("p.vGrnd.rCntr")
-    pronunciation = main_element.select_one("a").get("href")
-    return pronunciation
+def parse_declension(soup :BeautifulSoup):
+    declension_dict = {'singular': {}, 'plural': {}}
+    divs = soup.select("div.rAufZu > div.vDkl > div.vTbl") 
+    for i in range(len(divs)):
+        tb = divs[i].table
+        nom_art = tb.find('th', {'title': 'Nominative'}).next_sibling.next_sibling.text
+        nom     = tb.find('th', {'title': 'Nominative'}).next_sibling.next_sibling.next_sibling.text
 
-def get_pronunciation_link_conj(soup):
-    pass
+        gen_art = tb.find('th', {'title': 'Genitive'  }).next_sibling.next_sibling.text
+        gen     = tb.find('th', {'title': 'Genitive'  }).next_sibling.next_sibling.next_sibling.text
 
-def get_declension_definition(soup):
-    div_element = soup.select_one("div.rAbschnitt > div > section > div.rAufZu")
-    span_tag = div_element.select_one("div.rCntr > div > p > span")
-    definitions = span_tag.text.split()
-    definition = " ".join(definitions)
-    return definition
+        dat_art = tb.find('th', {'title': 'Dative'    }).next_sibling.next_sibling.text
+        dat     = tb.find('th', {'title': 'Dative'    }).next_sibling.next_sibling.next_sibling.text
 
-def get_declension(soup):
-    # create the related dataframe
-    main_element = soup.select_one("p.vGrnd.rCntr")
-    en_translation = soup.select("dl.vNrn > dd > span")[3].text
-    declension = soup.select_one("div.vTxtTbl > table")
-    declension_df = pd.read_html(str(declension))[0]
-    declension_df.columns = ["Fälle", "Singular", "Plural"]
-    declension_df["Fälle"] = ["nominativ", "genitiv", "dativ", "akkusativ"]
-
-    # arrange index and sort
-    declension_df.set_index("Fälle", inplace=True)
-    declension_df.sort_index(inplace=True)
-
-    declension_df = left_align_df(declension_df)
-
-    return declension_df
-
-def get_name_and_meaning_general(soup):
-    p_element_name = soup.select_one("p.vGrnd.rCntr")
-    name = " ".join(p_element_name.text.strip().split('\n'))
-    p_element_def = soup.select_one("p.r1Zeile.rU3px.rO0px")
-    definition = " ".join(p_element_def.text.strip().split('\n'))
-    p_element_plr = soup.select_one("p.vStm.rCntr")
-    plural = " ".join(p_element_plr.text.strip().split('\n'))
-    return name, definition, plural
+        acc_art = tb.find('th', {'title': 'Accusative'}).next_sibling.next_sibling.text
+        acc     = tb.find('th', {'title': 'Accusative'}).next_sibling.next_sibling.next_sibling.text
+        # singular
+        if i == 0:
+            declension_dict['singular'] = {'nominative': nom_art + ' ' + nom,
+                                           'genitive'  : gen_art + ' ' + gen,
+                                           'dative'    : dat_art + ' ' + dat,
+                                           'accusative': acc_art + ' ' + acc}
+        # plural
+        elif i == 1:
+            declension_dict['plural'] = {'nominative'  : nom_art + ' ' + nom,
+                                         'genitive'    : gen_art + ' ' + gen,
+                                         'dative'      : dat_art + ' ' + dat,
+                                         'accusative'  : acc_art + ' ' + acc}
+    return declension_dict

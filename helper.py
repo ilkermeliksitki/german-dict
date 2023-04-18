@@ -12,6 +12,8 @@ def parse_word_descriptors(soup: BeautifulSoup):
     AUXILIARY = ['haben', 'sein']
 
     word = soup.select_one("p.vGrnd.rCntr").text.strip()
+    # an·zeigen => an·zeigen
+    word = re.sub(r'\·', '', word)
     descriptors = soup.select_one("p.rInf").text.strip()
     # create descriptos list by trimming unnecessary chars.
     ls = re.findall(r'\b\w+\b', descriptors)
@@ -39,7 +41,13 @@ def parse_word_descriptors(soup: BeautifulSoup):
         if ax in ls:
             auxiliary = ax
             break
-    return word, word_type, gender, regular, auxiliary
+
+    separable = None
+    if word_type == 'verb':
+        separable = 0
+        if 'separable' in ls:
+            separable = 1
+    return word, word_type, gender, regular, auxiliary, separable
 
 
 def parse_declension(soup :BeautifulSoup):

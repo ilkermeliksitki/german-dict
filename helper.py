@@ -84,11 +84,11 @@ def _create_numbered_key_dict(table_rows: element.ResultSet) -> dict:
         d[str(i)] = _delete_superscripts(val)
     return d
 
-def _parse_conjugation_table(table: element.Tag, head: str, tense: str) -> dict:
+def _parse_conjugation_table(table: element.Tag, mood: str, tense: str) -> dict:
     pronouns = ['ich', 'du', 'er', 'wir', 'ihr', 'sie']
     d = {}
     trs = table.select('tr')
-    if head == 'simple':
+    if mood == 'simple':
         if tense == 'infinitive' or tense == 'participle':
             d = _create_numbered_key_dict(trs)
         else:
@@ -100,9 +100,9 @@ def _parse_conjugation_table(table: element.Tag, head: str, tense: str) -> dict:
                     conj = conj.replace('()', '')
                     conj = conj.strip()
                 d[pr] = _delete_superscripts(conj)
-    elif head == 'imperative':
+    elif mood == 'imperative':
         d = _create_numbered_key_dict(trs)
-    elif head == 'infinitive/participle':
+    elif mood == 'infinitive/participle':
         d = _create_numbered_key_dict(trs)
     else:
         for pr, tr in zip(pronouns, trs):
@@ -167,9 +167,9 @@ def parse_conjugation(soup: BeautifulSoup):
         divs = sec.select("div.rAufZu > div.vTbl")
         # tense name is not written for the case of simple tenses.
         if first_section:
-            head = 'simple'
+            mood = 'simple'
         else:
-            head = sec.select_one("header > h2").text.lower()
+            mood = sec.select_one("header > h2").text.lower()
         for div in divs:
             # tense name is under h2 tag in the first div, and h2 tag in others
             if first_section:
@@ -177,10 +177,10 @@ def parse_conjugation(soup: BeautifulSoup):
             else:
                 tense = div.select_one("div > h3").text.lower()
             table = div.select_one("table")
-            if head == 'imperative':
+            if mood == 'imperative':
                 # imperavite present == simple imperative, no need to parse
-                conjugation_dict[head][tense] = conjugation_dict['simple']['imperative']
+                conjugation_dict[mood][tense] = conjugation_dict['simple']['imperative']
                 continue
-            conjugation_dict[head][tense] = _parse_conjugation_table(table, head, tense)
+            conjugation_dict[mood][tense] = _parse_conjugation_table(table, mood, tense)
         first_section = False
     return conjugation_dict

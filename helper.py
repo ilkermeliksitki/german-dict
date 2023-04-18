@@ -184,3 +184,9 @@ def parse_conjugation(soup: BeautifulSoup):
             conjugation_dict[mood][tense] = _parse_conjugation_table(table, mood, tense)
         first_section = False
     return conjugation_dict
+
+def parse_definition(soup: BeautifulSoup):
+    p = soup.select_one("section.rBox.rBoxWht > div.rAufZu > div.rCntr > div > p.r1Zeile.rU3px.rO0px")
+    p = p.text.strip()
+    definition = ' '.join(p.split('\n'))
+    return definition

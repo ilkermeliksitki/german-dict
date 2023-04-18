@@ -1,26 +1,33 @@
 import sqlite3
 
-with open('schema.sql', 'r') as f:
-    schema = f.read()
+def initialize_database():
+    with open('schema.sql', 'r') as f:
+        schema = f.read()
 
-conn = sqlite3.connect('dictionary.db')
-curr = conn.cursor()
+    conn = sqlite3.connect('dictionary.db')
+    curr = conn.cursor()
 
-curr.executescript(schema)
-conn.commit()
+    curr.executescript(schema)
+    conn.commit()
 
-pos_ls = ['Nomen', 'Pronomen', 'Verb', 'Adjektiv', 'Adverb',
-          'Präposition', 'Konjunktion', 'Interjections']
+    pos_ls = ['noun', 'pronoun', 'verb', 'adjective', 'adverb',
+              'preposition', 'conjunction', 'interjections']
 
-for pos in pos_ls:
-    curr.execute("INSERT INTO types (type) VALUES (?)", (pos,))
+    for pos in pos_ls:
+        curr.execute("INSERT INTO types (type) VALUES (?)", (pos,))
 
-moods = ['simple', 'indicative', 'subjunctive', 'contidional',
-         'imperative', 'infinitive/participle']
+    moods = ['simple', 'indicative', 'subjunctive', 'contidional',
+             'imperative', 'infinitive/participle']
 
-for mood in moods:
-    curr.execute("INSERT INTO moods (mood) VALUES (?)", (mood,))
-conn.commit()
+    for mood in moods:
+        curr.execute("INSERT INTO moods (mood) VALUES (?)", (mood,))
+    conn.commit()
 
-curr.close()
-conn.close()
+    for gn in ['masculine', 'feminine', 'neutral']:
+        curr.execute("INSERT INTO genders (gender) VALUES (?)", (gn,))
+    conn.commit()
+
+
+    curr.close()
+    conn.close()
+    print('database is initialized')

@@ -1,21 +1,22 @@
 CREATE TABLE IF NOT EXISTS definitions (
     id INTEGER PRIMARY KEY,
-    definition TEXT NOT NULL
+    definition TEXT NOT NULL UNIQUE
 );
 
 -- auxiliary = 0 for haben, 1 for sein
+-- seperable = 0 for false, 1 for true
 CREATE TABLE IF NOT EXISTS words (
     id INTEGER PRIMARY KEY,
     word TEXT NOT NULL,
-    plural TEXT, 
-    gender INTEGER,
     auxiliary INTEGER,
     regular INTEGER NOT NULL,
     separable INTEGER,
     definition_id INTEGER NOT NULL,
     type_id INTEGER NOT NULL,
+    gender_id INTEGER,
     FOREIGN KEY (definition_id) REFERENCES definitions(id),
     FOREIGN KEY (type_id)       REFERENCES types(id)
+    FOREIGN KEY (gender_id)       REFERENCES genders(id)
 );
 
 CREATE TABLE IF NOT EXISTS conjugations (
@@ -57,4 +58,9 @@ CREATE TABLE IF NOT EXISTS types (
 CREATE TABLE IF NOT EXISTS moods (
     id INTEGER PRIMARY KEY,
     mood TEXT NOT NULL
+);
+
+CREATE TABLE IF NOT EXISTS genders (
+    id INTEGER PRIMARY KEY,
+    gender TEXT NOT NULL
 );

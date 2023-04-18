@@ -1,5 +1,5 @@
 import re
-from bs4 import BeautifulSoup
+from bs4 import BeautifulSoup, element
 
 def parse_word_descriptors(soup: BeautifulSoup):
     """ parses word descriptors for identifying its name, type,
@@ -71,3 +71,116 @@ def parse_declension(soup :BeautifulSoup):
                                          'dative'      : dat_art + ' ' + dat,
                                          'accusative'  : acc_art + ' ' + acc}
     return declension_dict
+
+def _delete_superscripts(s: str) -> str:
+    # delete superscripts by using unicode superscript range.
+    return re.sub(r'[\u2070-\u2079]', '', s)
+
+def _create_numbered_key_dict(table_rows: element.ResultSet) -> dict:
+    # this helper function is used for the tenses not having pronouns
+    d = {}
+    for i, tr in zip(range(len(table_rows)), table_rows):
+        val = tr.text.lower().strip()
+        d[str(i)] = _delete_superscripts(val)
+    return d
+
+def _parse_conjugation_table(table: element.Tag, head: str, tense: str) -> dict:
+    pronouns = ['ich', 'du', 'er', 'wir', 'ihr', 'sie']
+    d = {}
+    trs = table.select('tr')
+    if head == 'simple':
+        if tense == 'infinitive' or tense == 'participle':
+            d = _create_numbered_key_dict(trs)
+        else:
+            for pr, tr in zip(pronouns, trs):
+                # delete pronoun, lower, and strip the conjugation
+                conj = tr.text.lower().replace(pr, '').strip()
+                if tense == 'imperative':
+                    # there are extra paranthesis and white characters, delete them
+                    conj = conj.replace('()', '')
+                    conj = conj.strip()
+                d[pr] = _delete_superscripts(conj)
+    elif head == 'imperative':
+        d = _create_numbered_key_dict(trs)
+    elif head == 'infinitive/participle':
+        d = _create_numbered_key_dict(trs)
+    else:
+        for pr, tr in zip(pronouns, trs):
+            # delete pronoun, lower, and strip the conjugation
+            conj = tr.text.lower().replace(pr, '').strip()
+            d[pr] = _delete_superscripts(conj)
+    return d
+
+def parse_conjugation(soup: BeautifulSoup):
+    """ parses the conjugations of verbs and return stored conjugations
+        of that specific verb.
+    """
+    conjugation_dict = {
+        'simple': {
+            'present'          : {},
+            'imperfect'        : {},
+            'imperative'       : {},
+            'present subj.'    : {},
+            'imperf. subj.'    : {},
+            'infinitive'       : {},
+            'participle'       : {}
+        },
+        'indicative': {
+            'present'          : {},
+            'imperfect'        : {},
+            'perfect'          : {},
+            'pluperfect'       : {},
+            'future'           : {},
+            'future perfect'   : {}
+        },
+        'subjunctive': {
+            'present subj.'    : {},
+            'imperf. subj.'    : {},
+            'perfect subj.'    : {},
+            'pluperf. subj.'   : {},
+            'future subj.'     : {},
+            'fut. perf. subj.' : {}
+        },
+        'conditional (würde)': {
+            'present cond.' : {},
+            'past cond.'    : {}
+        },
+        'imperative': {
+            'present' : {}
+        },
+        'infinitive/participle': {
+            'infinitive i'  : {},
+            'infinitive ii' : {},
+            'participle i'  : {},
+            'participle ii' : {}
+        }
+    }
+
+    sections = soup.select("div.rAbschnitt > div > section.rBox.rBoxWht")
+    first_section = True
+    for sec in sections:
+        # desc is only used to determine the relevant sections
+        desc = sec.select_one("header > p")
+        if desc is None:
+            continue
+        # divs include tenses in the relevant sections.
+        divs = sec.select("div.rAufZu > div.vTbl")
+        # tense name is not written for the case of simple tenses.
+        if first_section:
+            head = 'simple'
+        else:
+            head = sec.select_one("header > h2").text.lower()
+        for div in divs:
+            # tense name is under h2 tag in the first div, and h2 tag in others
+            if first_section:
+                tense = div.select_one("div > h2").text.lower()
+            else:
+                tense = div.select_one("div > h3").text.lower()
+            table = div.select_one("table")
+            if head == 'imperative':
+                # imperavite present == simple imperative, no need to parse
+                conjugation_dict[head][tense] = conjugation_dict['simple']['imperative']
+                continue
+            conjugation_dict[head][tense] = _parse_conjugation_table(table, head, tense)
+        first_section = False
+    return conjugation_dict

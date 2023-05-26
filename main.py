@@ -10,12 +10,8 @@ from db import *
 from helper import *
 from config import *
 from init_db import initialize_database
+from escape_sequences import *
 
-BLUE   = "\033[1;34m"
-RED    = "\033[1;31m"
-GREEN  = "\033[1;32m"
-ITALIC = "\033[3m"
-RESET  = "\033[0m"
 
 # configuration
 if not is_database_initialized():
@@ -49,31 +45,42 @@ if not check_word_exists(word):
     definition = parse_definition(soup)
     definition_id = add_definition_to_database(definition)
     type_id = get_type_id(word_type)
-    print(definition_id, type_id)
+
     # add word to the database
     gender_id = None
     if word_type == 'verb':
-        print('conjugations is adding...')
-        print(parse_conjugation(soup))
+        add_word_to_database((word, gender_id, auxiliary, regular, separable, definition_id, type_id))
+        word_id = get_word_id(word)
+
+        conjugation_dict = parse_conjugation(soup)
+        add_conjugation_to_db(conjugation_dict, word_id)
     elif word_type == 'noun':
         gender_id = get_gender_id(gender)
+        add_word_to_database((word, gender_id, auxiliary, regular, separable, definition_id, type_id))
         print('declension is adding...')
-        print(parse_declension(soup))
+        print(conjugation_dict)
     elif word_type == 'adjective':
-        pass
+        add_word_to_database((word, gender_id, auxiliary, regular, separable, definition_id, type_id))
+    else:
+        print('unknown word type')
 
-    add_word_to_database((word, gender_id, auxiliary, regular, separable, definition_id, type_id))
-    print(parse_word_descriptors(soup))
-    pass
-else:
-    print('print word from database')
+    #print(parse_word_descriptors(soup))
 
 if args.declension:
     pass
 elif args.conjugation:
-    pass
+    tense_id_str =  '1 = present\n2 = imperfect\n3 = imperative\n4 = present subj.\n'
+    tense_id_str += '5 = imperf. subj.\n6 = infinitive\n7 = participle\n'
+    tense_id_str += 'Enter the desired id: '
+    tense_id = int(input(tense_id_str))
+    # print the conjugation
+    print_conjugation_of_verb(args.word, tense_id)
 elif args.word:
-    pass
+    word_id = get_word_id(word)
+    definition_id = get_definition_id(word)
+    definition = get_definition(definition_id)
+    print(BLUE + word + RESET)
+    print(RED + definition + RESET)
 else:
     sys.exit(2)
 

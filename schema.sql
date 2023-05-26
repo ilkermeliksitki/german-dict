@@ -1,6 +1,6 @@
 CREATE TABLE IF NOT EXISTS definitions (
     id INTEGER PRIMARY KEY,
-    definition TEXT NOT NULL UNIQUE
+    definition TEXT NOT NULL
 );
 
 -- auxiliary = 0 for haben, 1 for sein
@@ -27,7 +27,7 @@ CREATE TABLE IF NOT EXISTS conjugations (
     word_id INTEGER NOT NULL,
     mood_id INTEGER NOT NULL,
     FOREIGN KEY (word_id) REFERENCES words(id),
-    UNIQUE(tense, pronoun, conjugation, mood_id)
+    UNIQUE(tense, pronoun, conjugation, mood_id, word_id)
 );
 
 -- number = 0 for plural, 1 for singular

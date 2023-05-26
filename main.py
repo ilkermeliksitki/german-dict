@@ -54,9 +54,11 @@ if not check_word_exists(word):
     gender_id = None
     if word_type == 'verb':
         print('conjugations is adding...')
+        print(parse_conjugation(soup))
     elif word_type == 'noun':
         gender_id = get_gender_id(gender)
         print('declension is adding...')
+        print(parse_declension(soup))
     elif word_type == 'adjective':
         pass
 
@@ -65,8 +67,6 @@ if not check_word_exists(word):
     pass
 else:
     print('print word from database')
-#print(parse_declension(soup))
-#print(parse_conjugation(soup))
 
 if args.declension:
     pass

@@ -1,9 +1,7 @@
 #!/usr/bin/env python3
-
 import sys
 import argparse
 import requests
-import pandas as pd
 from bs4 import BeautifulSoup
 
 from db import *
@@ -11,7 +9,7 @@ from helper import *
 from config import *
 from init_db import initialize_database
 from escape_sequences import *
-
+from ai import *
 
 # configuration
 if not is_database_initialized():
@@ -25,6 +23,7 @@ parser.add_argument("-p", "--pronunciation", help="gives the link for the pronun
 group = parser.add_mutually_exclusive_group()
 group.add_argument("-d", "--declension", help="prints the declension of the word.", action="store_true")
 group.add_argument("-c", "--conjugation", help="prints the conjugation of the word.", action="store_true")
+group.add_argument("-s", "--sentence", help="prints example sentences.", action="store_true")
 args = parser.parse_args()
 
 word = args.word.strip()
@@ -67,7 +66,8 @@ if not check_word_exists(word):
     #print(parse_word_descriptors(soup))
 
 if args.declension:
-    pass
+    print('declension have not been implemented yet.')
+    sys.exit(3)
 elif args.conjugation:
     tense_id_str =  '1 = present\n2 = imperfect\n3 = imperative\n4 = present subj.\n'
     tense_id_str += '5 = imperf. subj.\n6 = infinitive\n7 = participle\n'
@@ -81,6 +81,8 @@ elif args.word:
     definition = get_definition(definition_id)
     print(BLUE + word + RESET)
     print(RED + definition + RESET)
+elif args.sentence:
+    pass
 else:
     sys.exit(2)
 

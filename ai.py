@@ -12,7 +12,7 @@ MODEL_ENGINE = "text-davinci-003"
 TEMPERATURE = 1.150
 
 def get_openai_response(word) -> str:
-    print(ITALIC + 'waiting for open ai to get example sentences\n' + RESET)
+    #print(ITALIC + 'waiting for open ai to get example sentences\n' + RESET)
     openai.api_key = OPENAI_API_KEY
     model_engine = MODEL_ENGINE
 
@@ -46,7 +46,7 @@ def parse_openai_response(response: str) -> List[Tuple[str, str]]:
         try:
             parsed_example_tp = re.findall(r'(\d)\W+(.*)\s-\s(.*)', example.strip())[0]
         except:
-            sys.stderr.write('open ai response error, please repeat the action.')
+            sys.stderr.write('open ai response error, please repeat the action.\n')
             sys.exit(4)
         # if lenght of the tuple is not 3, consider it is not parsed 
         # correctly, and skip.

@@ -16,6 +16,9 @@ $ pip install -r requirements.txt
 To use the `german-dict` cli, open up a terminal and type in german-dict, followed by the word you want to look up. You can also add any of the optional arguments `-h`, `-p`, `-s`, and `-c`. The following command will show the usage of it. `-d` flag have not been implemented yet.
 <br><br>
 Note that you have to use <b>OPENAI API key</b>, and have to save it to environmental variable called `OPENAI_API_KEY`. Secondly, you have to create an environmental variable called `GERMAN_DICT_DIR`, which should be the path of the project folder.
+
+<img src="./assets/usage-example.gif">
+
 ```
 $ german-dict -h
 usage: german-dict [-h] [-p] [-d | -c | -s] [-r] word

@@ -12,7 +12,8 @@ from init_db import initialize_database
 from escape_sequences import *
 from ai import *
 
-os.chdir('/home/melik/Documents/projects/german-dict')
+GERMAN_DICT_DIR = os.environ.get("GERMAN_DICT_DIR")
+os.chdir(GERMAN_DICT_DIR)
 
 # configuration
 if not is_database_initialized():

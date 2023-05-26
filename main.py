@@ -1,4 +1,5 @@
 #!/usr/bin/env python3
+import os
 import sys
 import argparse
 import requests
@@ -10,6 +11,8 @@ from config import *
 from init_db import initialize_database
 from escape_sequences import *
 from ai import *
+
+os.chdir('/home/melik/Documents/projects/german-dict')
 
 # configuration
 if not is_database_initialized():

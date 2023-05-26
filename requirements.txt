@@ -1,6 +1,8 @@
-sys
+os
+re
 bs4
-lxml
-pandas
+sys
+openai
+sqlite3
 argparse
-webbrowser
+

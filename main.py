@@ -24,6 +24,7 @@ group = parser.add_mutually_exclusive_group()
 group.add_argument("-d", "--declension", help="prints the declension of the word.", action="store_true")
 group.add_argument("-c", "--conjugation", help="prints the conjugation of the word.", action="store_true")
 group.add_argument("-s", "--sentence", help="prints example sentences.", action="store_true")
+parser.add_argument("-r", "--replace", help="replaces the example sentences.", action="store_true")
 args = parser.parse_args()
 
 word = args.word.strip()
@@ -51,13 +52,17 @@ if not check_word_exists(word):
         add_word_to_database((word, gender_id, auxiliary, regular, separable, definition_id, type_id))
         word_id = get_word_id(word)
 
+        # conjugation part
         conjugation_dict = parse_conjugation(soup)
         add_conjugation_to_db(conjugation_dict, word_id)
+
+        # initial sentences part
+        openai_response = get_openai_response(word)
+        parsed_sentences = parse_openai_response(openai_response)
+        add_sentences_to_db(parsed_sentences, word_id)
     elif word_type == 'noun':
         gender_id = get_gender_id(gender)
         add_word_to_database((word, gender_id, auxiliary, regular, separable, definition_id, type_id))
-        print('declension is adding...')
-        print(conjugation_dict)
     elif word_type == 'adjective':
         add_word_to_database((word, gender_id, auxiliary, regular, separable, definition_id, type_id))
     else:
@@ -75,14 +80,20 @@ elif args.conjugation:
     tense_id = int(input(tense_id_str))
     # print the conjugation
     print_conjugation_of_verb(args.word, tense_id)
+elif args.sentence:
+    word_id = get_word_id(word)
+    if args.replace:
+            # initial sentences part
+            openai_response = get_openai_response(word)
+            parsed_sentences = parse_openai_response(openai_response)
+            add_sentences_to_db(parsed_sentences, word_id, replace=True)
+    print_sentences_from_db(word_id)
 elif args.word:
     word_id = get_word_id(word)
     definition_id = get_definition_id(word)
     definition = get_definition(definition_id)
     print(BLUE + word + RESET)
     print(RED + definition + RESET)
-elif args.sentence:
-    pass
 else:
     sys.exit(2)
 

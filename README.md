@@ -3,7 +3,7 @@
 ## Introduction
 The german-dict cli is a command-line interface designed to help users easily find the conjugation or declension of a German word. The cli is written in Python, and it uses the popular requests library to fetch data from external sources.
 <br><br>
-It is also using OPENAI API for creating sentences and the fetched definitions, sentences, conjugations etc are saved locally to SQLite3 database.
+It is also using OPENAI API for creating sentences and the fetched definitions, sentences, conjugations etc are saved locally to SQLite3 <a href="./assets/german_dict_database_diagram.pdf">database</a>.
 
 ## Installation
 Before installing the CLI, make sure you have Python 3 installed on your system. To install the CLI, run the following command:

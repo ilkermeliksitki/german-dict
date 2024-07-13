@@ -1,6 +1,6 @@
 CREATE TABLE IF NOT EXISTS definitions (
     id INTEGER PRIMARY KEY,
-    definition TEXT NOT NULL
+    definition TEXT NOT NULL UNIQUE
 );
 
 -- auxiliary = 0 for haben, 1 for sein

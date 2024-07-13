@@ -62,6 +62,14 @@ def get_word_id(word):
     _close_database(curr, conn)
     return result[0]
 
+def get_word(word_id):
+    curr, conn = _open_database()
+    curr.execute('SELECT word FROM words WHERE id = ?', (word_id,))
+    result = curr.fetchone()
+    print(result)
+    _close_database(curr, conn)
+    return result[0]
+
 def get_definition_id(word):
     curr, conn = _open_database()
     curr.execute('SELECT definition_id FROM words WHERE word LIKE ?', ("%" + word + "%",))

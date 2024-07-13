@@ -22,12 +22,12 @@ def check_word_exists(word: str):
     return result is not None 
 
 def add_word_to_database(values: Tuple[str, str, str, str, str, str, str,]):
-    word, gender_id, auxiliary, regular, separable, definition_id, type_id = values
+    #word, gender_id, auxiliary, regular, separable, definition_id, type_id = values
     # double check
     curr, conn = _open_database()
     curr.execute('''INSERT OR IGNORE INTO words
-                 (word, gender_id, auxiliary, regular, separable, definition_id, type_id) 
-                 VALUES (?, ?, ?, ?, ?, ?, ?)''', values)
+                 (word, gender_id, auxiliary, regular, separable, definition_id, type_id, have_declension, have_conjugaison) 
+                 VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)''', values)
     _close_database(curr, conn)
 
 def add_definition_to_database(definition: str) -> int:

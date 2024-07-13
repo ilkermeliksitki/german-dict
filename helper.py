@@ -11,7 +11,7 @@ def parse_word_descriptors(soup: BeautifulSoup):
     REGULAR = ['regular', 'irregular']
     AUXILIARY = ['haben', 'sein']
 
-    word = soup.select_one("p.vGrnd.rCntr").text.strip()
+    word = soup.select_one("div.rCntr").text.strip()
     # an·zeigen => an·zeigen
     word = re.sub(r'\·', '', word)
     descriptors = soup.select_one("p.rInf").text.strip()

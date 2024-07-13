@@ -7,13 +7,15 @@ CREATE TABLE IF NOT EXISTS definitions (
 -- seperable = 0 for false, 1 for true
 CREATE TABLE IF NOT EXISTS words (
     id INTEGER PRIMARY KEY,
-    word TEXT NOT NULL,
+    word TEXT NOT NULL UNIQUE,
     auxiliary INTEGER,
     regular INTEGER NOT NULL,
     separable INTEGER,
     definition_id INTEGER NOT NULL,
     type_id INTEGER NOT NULL,
     gender_id INTEGER,
+    have_declension INTEGER NOT NULL,
+    have_conjugaison INTEGER NOT NULL,
     FOREIGN KEY (definition_id) REFERENCES definitions(id),
     FOREIGN KEY (type_id)       REFERENCES types(id)
     FOREIGN KEY (gender_id)       REFERENCES genders(id)

@@ -53,7 +53,7 @@ if not check_word_exists(word):
     # add word to the database
     gender_id = None
     if word_type == 'verb':
-        add_word_to_database((word, gender_id, auxiliary, regular, separable, definition_id, type_id))
+        add_word_to_database((word, gender_id, auxiliary, regular, separable, definition_id, type_id, 0, 1))
         word_id = get_word_id(word)
 
         # conjugation part
@@ -66,9 +66,9 @@ if not check_word_exists(word):
         add_sentences_to_db(parsed_sentences, word_id)
     elif word_type == 'noun':
         gender_id = get_gender_id(gender)
-        add_word_to_database((word, gender_id, auxiliary, regular, separable, definition_id, type_id))
+        add_word_to_database((word, gender_id, auxiliary, regular, separable, definition_id, type_id, 1, 0))
     elif word_type == 'adjective':
-        add_word_to_database((word, gender_id, auxiliary, regular, separable, definition_id, type_id))
+        add_word_to_database((word, gender_id, auxiliary, regular, separable, definition_id, type_id, 1, 0))
     else:
         print('unknown word type')
 
@@ -87,10 +87,10 @@ elif args.conjugation:
 elif args.sentence:
     word_id = get_word_id(word)
     if args.replace:
-            # initial sentences part
-            openai_response = get_openai_response(word)
-            parsed_sentences = parse_openai_response(openai_response)
-            add_sentences_to_db(parsed_sentences, word_id, replace=True)
+        # initial sentences part
+        openai_response = get_openai_response(word)
+        parsed_sentences = parse_openai_response(openai_response)
+        add_sentences_to_db(parsed_sentences, word_id, replace=True)
     print_sentences_from_db(word_id)
 elif args.word:
     word_id = get_word_id(word)
@@ -101,7 +101,7 @@ elif args.word:
 else:
     sys.exit(2)
 
-
+  
 
 
 

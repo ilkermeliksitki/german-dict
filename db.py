@@ -16,8 +16,9 @@ def _close_database(curr: Cursor, conn: Connection):
 
 def check_word_exists(word: str):
     curr, conn = _open_database()
-    curr.execute('SELECT * FROM words WHERE word = ?', (word,))
+    curr.execute('SELECT * FROM words WHERE word LIKE ?', ("%" + word + "%",))
     result = curr.fetchone()
+    print(result)
     _close_database(curr, conn)
     return result is not None 
 
@@ -56,14 +57,14 @@ def get_gender_id(gender: str) -> int:
 
 def get_word_id(word):
     curr, conn = _open_database()
-    curr.execute('SELECT id FROM words WHERE word = ?', (word,))
+    curr.execute('SELECT id FROM words WHERE word LIKE ?', ("%" + word + "%",))
     result = curr.fetchone()
     _close_database(curr, conn)
     return result[0]
 
 def get_definition_id(word):
     curr, conn = _open_database()
-    curr.execute('SELECT definition_id FROM words WHERE word = ?', (word,))
+    curr.execute('SELECT definition_id FROM words WHERE word LIKE ?', ("%" + word + "%",))
     result = curr.fetchone()
     _close_database(curr, conn)
     return result[0]

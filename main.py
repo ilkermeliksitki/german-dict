@@ -1,4 +1,4 @@
-#!/usr/bin/env python3
+#!/home/melik/Documents/projects/german-dict/venv/bin/python
 import os
 import sys
 import argparse

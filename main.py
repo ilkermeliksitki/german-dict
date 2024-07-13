@@ -53,8 +53,8 @@ if not check_word_exists(word):
     # add word to the database
     gender_id = None
     if word_type == 'verb':
-        add_word_to_database((word, gender_id, auxiliary, regular, separable, definition_id, type_id, 0, 1))
         word_id = get_word_id(word)
+        add_word_to_database((word, gender_id, auxiliary, regular, separable, definition_id, type_id, 0, 1))
 
         # conjugation part
         conjugation_dict = parse_conjugation(soup)
@@ -67,6 +67,11 @@ if not check_word_exists(word):
     elif word_type == 'noun':
         gender_id = get_gender_id(gender)
         add_word_to_database((word, gender_id, auxiliary, regular, separable, definition_id, type_id, 1, 0))
+
+        word_id = get_word_id(word)
+        openai_response = get_openai_response(word)
+        parsed_sentences = parse_openai_response(openai_response)
+        add_sentences_to_db(parsed_sentences, word_id)
     elif word_type == 'adjective':
         add_word_to_database((word, gender_id, auxiliary, regular, separable, definition_id, type_id, 1, 0))
     else:
@@ -93,10 +98,12 @@ elif args.sentence:
         add_sentences_to_db(parsed_sentences, word_id, replace=True)
     print_sentences_from_db(word_id)
 elif args.word:
+    # get saved word in database
     word_id = get_word_id(word)
+    full_word = get_word(word_id) # print das Zimmer, not zimmer (search word)
     definition_id = get_definition_id(word)
     definition = get_definition(definition_id)
-    print(BLUE + word + RESET)
+    print(BLUE + full_word + RESET)
     print(RED + definition + RESET)
 else:
     sys.exit(2)

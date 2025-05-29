@@ -18,18 +18,26 @@ def check_word_exists(word: str):
     curr, conn = _open_database()
     curr.execute('SELECT * FROM words WHERE word LIKE ?', ("%" + word + "%",))
     result = curr.fetchone()
-    print(result)
+    # id  word              auxiliary  regular    separable  definition_id  type_id  gender_id  have_declension  have_conjugaison
+    try:
+        print(f"id = {result[0]}, word = {result[1]}, auxiliary = {result[2]}, regular = {result[3]}, separable = {result[4]}")
+        print(f"def_id = {result[5]}, type_id={result[6]}, gid = {result[7]}, have_declension = {result[8]}, have_conjugaison = {result[9]}")
+    except TypeError:
+        pass
     _close_database(curr, conn)
     return result is not None 
 
 def add_word_to_database(values: Tuple[str, str, str, str, str, str, str,]):
     #word, gender_id, auxiliary, regular, separable, definition_id, type_id = values
     # double check
+    print(values)
     curr, conn = _open_database()
-    curr.execute('''INSERT OR IGNORE INTO words
+    curr.execute('''INSERT INTO words
                  (word, gender_id, auxiliary, regular, separable, definition_id, type_id, have_declension, have_conjugaison) 
                  VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)''', values)
+    conn.commit()
     _close_database(curr, conn)
+    print(f"Word '{values[0]}' added to database.")
 
 def add_definition_to_database(definition: str) -> int:
     # add definition to database, and return id of the definition
@@ -39,6 +47,7 @@ def add_definition_to_database(definition: str) -> int:
     curr.execute('SELECT id FROM definitions WHERE definition = ?', (definition,))
     result = curr.fetchone()
     _close_database(curr, conn)
+    print(f"Definition '{definition}' added with id {result[0]}")
     return result[0]
 
 def get_type_id(type_: str) -> int:
@@ -145,3 +154,31 @@ def print_sentences_from_db(word_id):
         print(BROWN_LIGHT + ITALIC + en + RESET, end='\n\n')
     _close_database(curr, conn)
 
+
+def add_declension_to_db(declension_dict, word_id):
+    curr, conn = _open_database()
+
+    query = """
+    INSERT INTO declensions (
+        singular_nominative, plural_nominative,
+        singular_genitive, plural_genitive,
+        singular_dative, plural_dative,
+        singular_accusative, plural_accusative,
+        word_id
+    )
+    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
+    """
+    values = (
+        declension_dict['singular']['nominative'],
+        declension_dict['plural']['nominative'],
+        declension_dict['singular']['genitive'],
+        declension_dict['plural']['genitive'],
+        declension_dict['singular']['dative'],
+        declension_dict['plural']['dative'],
+        declension_dict['singular']['accusative'],
+        declension_dict['plural']['accusative'],
+        word_id
+    )
+    conn.execute(query, values)
+
+    _close_database(curr, conn)

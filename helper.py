@@ -1,5 +1,8 @@
 import re
 from bs4 import BeautifulSoup, element
+import pandas as pd
+from io import StringIO
+import re
 
 def parse_word_descriptors(soup: BeautifulSoup):
     """ parses word descriptors for identifying its name, type,
@@ -200,3 +203,35 @@ def parse_definition(soup: BeautifulSoup):
     p = p.text.strip()
     definition = ' '.join(p.split('\n'))
     return definition
+
+
+def parse_declension(soup: BeautifulSoup):
+
+    def clean_form(cell):
+        """Removes spaces, slashes, and superscripts. Keeps first clear form."""
+        if pd.isna(cell):
+            return ''
+        text = re.sub(r"\s+", "", str(cell))          # remove all whitespace
+        text = re.split(r"/", text)[0]                # take the first variant before slash
+        text = re.sub(r"\d+", "", text)               # remove superscript numbers
+        return text
+
+    declension_dict = {
+        'singular': {'nominative': '', 'genitive': '', 'dative': '', 'accusative': ''},
+        'plural': {'nominative': '', 'genitive': '', 'dative': '', 'accusative': ''}
+    }
+
+    cases = ['nominative', 'genitive', 'dative', 'accusative']
+
+    # Extract tables
+    table1_html = soup.select_one("div.vDkl > div.vTbl:nth-of-type(1) > table").prettify()
+    table2_html = soup.select_one("div.vDkl > div.vTbl:nth-of-type(2) > table").prettify()
+
+    sgl = pd.read_html(StringIO(table1_html))[0]
+    plr = pd.read_html(StringIO(table2_html))[0]
+
+    for i, case in enumerate(cases):
+        declension_dict['singular'][case] = clean_form(sgl.iloc[i, 2])
+        declension_dict['plural'][case] = clean_form(plr.iloc[i, 2])
+
+    return declension_dict

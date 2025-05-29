@@ -29,12 +29,13 @@ group.add_argument("-d", "--declension", help="prints the declension of the word
 group.add_argument("-c", "--conjugation", help="prints the conjugation of the word.", action="store_true")
 group.add_argument("-s", "--sentence", help="prints example sentences.", action="store_true")
 parser.add_argument("-r", "--replace", help="replaces the example sentences.", action="store_true")
+parser.add_argument("-a", "--openai", help="if openai call is wanted, this should be provided", action="store_true")
 args = parser.parse_args()
 
 word = args.word.strip()
 
 if not check_word_exists(word):
-    print('not exist')
+    print('the word does not exist in the database.')
     r = requests.get(f"https://www.verbformen.com/?w={word}")
     if r.status_code == 429:
         sys.stderr.write("Too many requests, slow  down\n")
@@ -62,17 +63,25 @@ if not check_word_exists(word):
         add_conjugation_to_db(conjugation_dict, word_id)
 
         # initial sentences part
-        openai_response = get_openai_response(word)
-        parsed_sentences = parse_openai_response(openai_response)
-        add_sentences_to_db(parsed_sentences, word_id)
+        if args.openai:
+            openai_response = get_openai_response(word)
+            parsed_sentences = parse_openai_response(openai_response)
+            add_sentences_to_db(parsed_sentences, word_id)
     elif word_type == 'noun':
         gender_id = get_gender_id(gender)
         add_word_to_database((word, gender_id, auxiliary, regular, separable, definition_id, type_id, 1, 0))
 
         word_id = get_word_id(word)
-        openai_response = get_openai_response(word)
-        parsed_sentences = parse_openai_response(openai_response)
-        add_sentences_to_db(parsed_sentences, word_id)
+
+        if args.openai:
+            openai_response = get_openai_response(word)
+            parsed_sentences = parse_openai_response(openai_response)
+            add_sentences_to_db(parsed_sentences, word_id)
+
+        # add declension to the database
+        declension_dict = parse_declension(soup)
+        add_declension_to_db(declension_dict, word_id)
+
     elif word_type == 'adjective':
         add_word_to_database((word, gender_id, auxiliary, regular, separable, definition_id, type_id, 1, 0))
     else:

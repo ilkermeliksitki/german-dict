@@ -35,11 +35,14 @@ CREATE TABLE IF NOT EXISTS conjugations (
 -- number = 0 for plural, 1 for singular
 CREATE TABLE IF NOT EXISTS declensions (
     id INTEGER PRIMARY KEY,
-    nominative TEXT NOT NULL,
-    genitive TEXT NOT NULL,
-    dative TEXT NOT NULL,
-    accusative TEXT NOT NULL,
-    number INTEGER NOT NULL,
+    singular_nominative TEXT NOT NULL,
+    plural_nominative TEXT NOT NULL,
+    singular_genitive TEXT NOT NULL,
+    plural_genitive TEXT NOT NULL,
+    singular_dative TEXT NOT NULL,
+    plural_dative TEXT NOT NULL,
+    singular_accusative TEXT NOT NULL,
+    plural_accusative TEXT NOT NULL,
     word_id INTEGER NOT NULL,
     FOREIGN KEY (word_id) REFERENCES words(id)
 );

@@ -214,7 +214,18 @@ def parse_declension(soup: BeautifulSoup):
         text = re.sub(r"\s+", "", str(cell))          # remove all whitespace
         text = re.split(r"/", text)[0]                # take the first variant before slash
         text = re.sub(r"\d+", "", text)               # remove superscript numbers
+        text = re.sub(r'[\u2070-\u2079]+$', '', text) # remove unicode superscripts
         return text
+
+    def split_article_words(compound):
+        """Splits compound articles into separate words. derTisch => der Tisch."""
+        match = re.match(r'^([a-zäöüß]+)([A-ZÄÖÜ].*)$', compound)
+        if match:
+            return match.group(1) + ' ' + match.group(2)
+        else:
+            # fallback if no match
+            return compound
+
 
     declension_dict = {
         'singular': {'nominative': '', 'genitive': '', 'dative': '', 'accusative': ''},
@@ -228,10 +239,16 @@ def parse_declension(soup: BeautifulSoup):
     table2_html = soup.select_one("div.vDkl > div.vTbl:nth-of-type(2) > table").prettify()
 
     sgl = pd.read_html(StringIO(table1_html))[0]
+    # concatenate the first and second columns
+    sgl.iloc[:, 1] = sgl.iloc[:, 1] + '  ' + sgl.iloc[:, 2]
+
     plr = pd.read_html(StringIO(table2_html))[0]
 
+    # concatenate the first and second columns
+    plr.iloc[:, 1] = plr.iloc[:, 1] + '  ' + plr.iloc[:, 2]
+
     for i, case in enumerate(cases):
-        declension_dict['singular'][case] = clean_form(sgl.iloc[i, 2])
-        declension_dict['plural'][case] = clean_form(plr.iloc[i, 2])
+        declension_dict['singular'][case] = split_article_words(clean_form(sgl.iloc[i, 1]))
+        declension_dict['plural'][case] = split_article_words(clean_form(plr.iloc[i, 1]))
 
     return declension_dict

@@ -18,26 +18,18 @@ def check_word_exists(word: str):
     curr, conn = _open_database()
     curr.execute('SELECT * FROM words WHERE word LIKE ?', ("%" + word + "%",))
     result = curr.fetchone()
-    # id  word              auxiliary  regular    separable  definition_id  type_id  gender_id  have_declension  have_conjugaison
-    try:
-        print(f"id = {result[0]}, word = {result[1]}, auxiliary = {result[2]}, regular = {result[3]}, separable = {result[4]}")
-        print(f"def_id = {result[5]}, type_id={result[6]}, gid = {result[7]}, have_declension = {result[8]}, have_conjugaison = {result[9]}")
-    except TypeError:
-        pass
     _close_database(curr, conn)
     return result is not None 
 
 def add_word_to_database(values: Tuple[str, str, str, str, str, str, str,]):
     #word, gender_id, auxiliary, regular, separable, definition_id, type_id = values
     # double check
-    print(values)
     curr, conn = _open_database()
     curr.execute('''INSERT INTO words
                  (word, gender_id, auxiliary, regular, separable, definition_id, type_id, have_declension, have_conjugaison) 
                  VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)''', values)
     conn.commit()
     _close_database(curr, conn)
-    print(f"Word '{values[0]}' added to database.")
 
 def add_definition_to_database(definition: str) -> int:
     # add definition to database, and return id of the definition
@@ -47,7 +39,6 @@ def add_definition_to_database(definition: str) -> int:
     curr.execute('SELECT id FROM definitions WHERE definition = ?', (definition,))
     result = curr.fetchone()
     _close_database(curr, conn)
-    print(f"Definition '{definition}' added with id {result[0]}")
     return result[0]
 
 def get_type_id(type_: str) -> int:
@@ -71,11 +62,22 @@ def get_word_id(word):
     _close_database(curr, conn)
     return result[0]
 
+def get_word_type(word):
+    curr, conn = _open_database()
+    query = '''
+        SELECT type FROM types
+        JOIN words ON type_id = types.id
+        WHERE word LIKE ?
+    '''
+    curr.execute(query, ("%" + word + "%",))
+    result = curr.fetchone()
+    _close_database(curr, conn)
+    return result[0] if result else None
+
 def get_word(word_id):
     curr, conn = _open_database()
     curr.execute('SELECT word FROM words WHERE id = ?', (word_id,))
     result = curr.fetchone()
-    print(result)
     _close_database(curr, conn)
     return result[0]
 
@@ -134,6 +136,28 @@ def print_conjugation_of_verb(word, tense_id):
         print(f"{GREEN + conjugation_tuple[2] + RESET}")
     _close_database(curr, conn)
 
+def print_declension_of_noun(word):
+    curr, conn = _open_database()
+    word_id = get_word_id(word)
+    curr.execute('SELECT singular_nominative, plural_nominative, singular_genitive, plural_genitive, '
+                 'singular_dative, plural_dative, singular_accusative, plural_accusative '
+                 'FROM declensions WHERE word_id = ?', (word_id,))
+    result = curr.fetchone()
+    if result:
+        print(RED + "Singular" + RESET)
+        print(f"{BLUE}nom: {result[0]} {RESET}")
+        print(f"{BLUE}acc: {result[6]} {RESET}")
+        print(f"{BLUE}dat: {result[4]} {RESET}")
+        print(f"{BLUE}gen: {result[2]} {RESET}")
+        print()
+        print(RED + "Plural" + RESET)
+        print(f"{BLUE}nom: {result[1]} {RESET}")
+        print(f"{BLUE}acc: {result[7]} {RESET}")
+        print(f"{BLUE}dat: {result[5]} {RESET}")
+        print(f"{BLUE}gen: {result[3]} {RESET}")
+    else:
+        print(f"{RED}No declension found for the word '{word}'.{RESET}")
+
 def add_sentences_to_db(sentences_ls, word_id, replace=False):
     curr, conn = _open_database()
     if replace:
@@ -159,14 +183,14 @@ def add_declension_to_db(declension_dict, word_id):
     curr, conn = _open_database()
 
     query = """
-    INSERT INTO declensions (
-        singular_nominative, plural_nominative,
-        singular_genitive, plural_genitive,
-        singular_dative, plural_dative,
-        singular_accusative, plural_accusative,
-        word_id
-    )
-    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
+        INSERT INTO declensions (
+            singular_nominative, plural_nominative,
+            singular_genitive, plural_genitive,
+            singular_dative, plural_dative,
+            singular_accusative, plural_accusative,
+            word_id
+        )
+        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
     """
     values = (
         declension_dict['singular']['nominative'],

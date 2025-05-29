@@ -35,7 +35,6 @@ args = parser.parse_args()
 word = args.word.strip()
 
 if not check_word_exists(word):
-    print('the word does not exist in the database.')
     r = requests.get(f"https://www.verbformen.com/?w={word}")
     if r.status_code == 429:
         sys.stderr.write("Too many requests, slow  down\n")
@@ -89,10 +88,20 @@ if not check_word_exists(word):
 
     #print(parse_word_descriptors(soup))
 
+word_type = get_word_type(word)
 if args.declension:
-    print('declension have not been implemented yet.')
-    sys.exit(3)
+    if word_type != 'noun':
+        sys.stderr.write("Declension is only available for nouns.\n")
+        sys.exit(1)
+    print_declension_of_noun(word)
+    if args.openai:
+        openai_response = get_openai_response(word)
+        parsed_sentences = parse_openai_response(openai_response)
+        add_sentences_to_db(parsed_sentences, word_id, replace=True)
 elif args.conjugation:
+    if word_type != 'verb':
+        sys.stderr.write("Conjugation is only available for verbs.\n")
+        sys.exit(1)
     tense_id_str =  '1 = present\n2 = imperfect\n3 = imperative\n4 = present subj.\n'
     tense_id_str += '5 = imperf. subj.\n6 = infinitive\n7 = participle\n'
     tense_id_str += 'Enter the desired id: '

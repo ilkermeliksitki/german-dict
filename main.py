@@ -34,6 +34,7 @@ args = parser.parse_args()
 word = args.word.strip()
 
 if not check_word_exists(word):
+    print('not exist')
     r = requests.get(f"https://www.verbformen.com/?w={word}")
     if r.status_code == 429:
         sys.stderr.write("Too many requests, slow  down\n")
@@ -53,8 +54,8 @@ if not check_word_exists(word):
     # add word to the database
     gender_id = None
     if word_type == 'verb':
-        word_id = get_word_id(word)
         add_word_to_database((word, gender_id, auxiliary, regular, separable, definition_id, type_id, 0, 1))
+        word_id = get_word_id(word)
 
         # conjugation part
         conjugation_dict = parse_conjugation(soup)

@@ -194,7 +194,7 @@ def parse_conjugation(soup: BeautifulSoup):
     return conjugation_dict
 
 def parse_definition(soup: BeautifulSoup):
-    p = soup.select_one("section.rBox.rBoxWht > div.rAufZu > div.rCntr > div > p.r1Zeile.rU3px.rO0px")
+    p = soup.select_one("section.rBox.rBoxWht > div.rAufZu > div#vStckInf > div.rCntr > div > p.r1Zeile")
     p = p.text.strip()
     definition = ' '.join(p.split('\n'))
     return definition

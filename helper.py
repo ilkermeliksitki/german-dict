@@ -11,12 +11,14 @@ def parse_word_descriptors(soup: BeautifulSoup):
     REGULAR = ['regular', 'irregular']
     AUXILIARY = ['haben', 'sein']
 
-    word = soup.select_one("div.rCntr").text.strip()
-    # an·zeigen => an·zeigen
+    word = soup.select_one("div.rCntr.rClear").text.strip()
+    # an·zeigen => anzeigen
     word = re.sub(r'\·', '', word)
     descriptors = soup.select_one("p.rInf").text.strip()
     # create descriptos list by trimming unnecessary chars.
     ls = re.findall(r'\b\w+\b', descriptors)
+    # clean up the list by superscripts and digits at the end of the words
+    ls = [re.sub(r'[\d¹²³⁴⁵⁶⁷⁸⁹⁰]+$', '', word) for word in ls]
 
     word_type = 'verb' 
     for tp in TYPES:

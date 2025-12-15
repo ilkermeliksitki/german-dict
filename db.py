@@ -15,12 +15,21 @@ def _close_database(curr: Cursor, conn: Connection):
     conn.commit()
     curr.close()
 
+def _execute_query_with_fallback(curr, query, word):
+    # try exact match first, to prevent similar words to block each other
+    curr.execute(query, (word,))
+    result = curr.fetchone()
+    if result is None:
+        # fallback to fuzzy match
+        curr.execute(query, ("%" + word + "%",))
+        result = curr.fetchone()
+    return result
+
 def check_word_exists(word: str):
     curr, conn = _open_database()
-    curr.execute('SELECT * FROM words WHERE word LIKE ?', ("%" + word + "%",))
-    result = curr.fetchone()
+    result = _execute_query_with_fallback(curr, 'SELECT * FROM words WHERE word LIKE ?', word)
     _close_database(curr, conn)
-    return result is not None 
+    return result is not None
 
 def add_word_to_database(values: Tuple[str, str, str, str, str, str, str,]):
     #word, gender_id, auxiliary, regular, separable, definition_id, type_id = values
@@ -62,8 +71,7 @@ def get_gender_id(gender: str) -> int:
 
 def get_word_id(word):
     curr, conn = _open_database()
-    curr.execute('SELECT id FROM words WHERE word LIKE ?', ("%" + word + "%",))
-    result = curr.fetchone()
+    result = _execute_query_with_fallback(curr, 'SELECT id FROM words WHERE word LIKE ?', word)
     _close_database(curr, conn)
     if result is None:
         raise ValueError(f"Word '{word}' not found in database via get_word_id")
@@ -76,8 +84,7 @@ def get_word_type(word):
         JOIN words ON type_id = types.id
         WHERE word LIKE ?
     '''
-    curr.execute(query, ("%" + word + "%",))
-    result = curr.fetchone()
+    result = _execute_query_with_fallback(curr, query, word)
     _close_database(curr, conn)
     return result[0] if result else None
 
@@ -90,8 +97,7 @@ def get_word(word_id):
 
 def get_definition_id(word):
     curr, conn = _open_database()
-    curr.execute('SELECT definition_id FROM words WHERE word LIKE ?', ("%" + word + "%",))
-    result = curr.fetchone()
+    result = _execute_query_with_fallback(curr, 'SELECT definition_id FROM words WHERE word LIKE ?', word)
     _close_database(curr, conn)
     return result[0]
 

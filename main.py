@@ -147,12 +147,43 @@ elif args.conjugation:
     if word_type != 'verb':
         sys.stderr.write("Conjugation is only available for verbs.\n")
         sys.exit(1)
-    tense_id_str =  '1 = present\n2 = imperfect\n3 = imperative\n4 = present subj.\n'
-    tense_id_str += '5 = imperf. subj.\n6 = infinitive\n7 = participle\n'
-    tense_id_str += 'Enter the desired id: '
-    tense_id = int(input(tense_id_str))
-    # print the conjugation
-    print_conjugation_of_verb(args.word, tense_id)
+
+    word_id = get_word_id(word)
+    moods = get_available_moods(word_id)
+
+    if not moods:
+        print(f"{RED}No conjugation data found.{RESET}")
+        sys.exit(0)
+
+    print(f"\n{RED}Available Moods:{RESET}")
+    for idx, (mid, mname) in enumerate(moods):
+        print(f"{idx + 1}: {mname.capitalize()}")
+
+    try:
+        mood_idx = int(input(f"\n{BLUE}Select Mood: {RESET}")) - 1
+        if 0 <= mood_idx < len(moods):
+            selected_mood_id = moods[mood_idx][0]
+            selected_mood_name = moods[mood_idx][1]
+
+            tenses = get_available_tenses(word_id, selected_mood_id)
+            if not tenses:
+                print(f"{RED}No tenses found for this mood.{RESET}")
+                sys.exit(0)
+
+            print(f"\n{RED}Available Tenses for {selected_mood_name.capitalize()}:{RESET}")
+            for idx, tense in enumerate(tenses):
+                print(f"{idx + 1}: {tense.capitalize()}")
+
+            tense_idx = int(input(f"\n{BLUE}Select Tense: {RESET}")) - 1
+            if 0 <= tense_idx < len(tenses):
+                selected_tense = tenses[tense_idx]
+                print_conjugation_of_verb(word, selected_mood_id, selected_tense)
+            else:
+                print(f"{RED}Invalid tense selection.{RESET}")
+        else:
+            print(f"{RED}Invalid mood selection.{RESET}")
+    except ValueError:
+        print(f"{RED}Invalid input.{RESET}")
 elif args.sentence:
     word_id = get_word_id(word)
     if args.replace:

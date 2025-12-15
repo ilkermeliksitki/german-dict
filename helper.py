@@ -4,6 +4,41 @@ import pandas as pd
 from io import StringIO
 import re
 
+def get_possible_matches(word: str) -> list:
+    """Generates possible umlaut variations for a given word."""
+    candidates = [word]
+
+    # Common mappings
+    mappings = {
+        'ae': 'ä',
+        'oe': 'ö',
+        'ue': 'ü',
+        'ss': 'ß'
+    }
+
+    # Simple replacement for typical patterns
+    temp_word = word
+    for k, v in mappings.items():
+        if k in temp_word:
+            candidates.append(temp_word.replace(k, v))
+
+    # also try replacing single vowels if they mapped to umlauts (heuristic)
+    # this is broader, e.g. "wahlen" -> "wählen"
+    vowel_map = {
+        'a': 'ä',
+        'o': 'ö',
+        'u': 'ü'
+    }
+
+    # generate variations for each vowel occurrence
+    # for now, add the specific 'a' -> 'ä' etc logic if the simple mapping didn't cover it.
+
+    if 'a' in word: candidates.append(word.replace('a', 'ä'))
+    if 'o' in word: candidates.append(word.replace('o', 'ö'))
+    if 'u' in word: candidates.append(word.replace('u', 'ü'))
+
+    return list(set(candidates))
+
 def parse_word_descriptors(soup: BeautifulSoup):
     """ parses word descriptors for identifying its name, type,
         gender (if it exists), regularity, and auxiliary (if it
@@ -14,10 +49,19 @@ def parse_word_descriptors(soup: BeautifulSoup):
     REGULAR = ['regular', 'irregular']
     AUXILIARY = ['haben', 'sein']
 
-    word = soup.select_one("div.rCntr.rClear").text.strip()
+    r_cntr = soup.select_one("div.rCntr.rClear")
+    if not r_cntr:
+        return None, None, None, None, None, None
+
+    word = r_cntr.text.strip()
     # an·zeigen => anzeigen
     word = re.sub(r'\·', '', word)
-    descriptors = soup.select_one("p.rInf").text.strip()
+
+    descriptors_tag = soup.select_one("p.rInf")
+    if not descriptors_tag:
+        return word, 'unknown', None, None, None, None
+
+    descriptors = descriptors_tag.text.strip()
     # create descriptos list by trimming unnecessary chars.
     ls = re.findall(r'\b\w+\b', descriptors)
     # clean up the list by superscripts and digits at the end of the words

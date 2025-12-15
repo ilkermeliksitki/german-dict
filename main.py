@@ -34,59 +34,104 @@ args = parser.parse_args()
 
 word = args.word.strip()
 
-if not check_word_exists(word):
-    r = requests.get(f"https://www.verbformen.com/?w={word}")
-    if r.status_code == 429:
-        sys.stderr.write("Too many requests, slow  down\n")
-        sys.exit(3)
+# validates if word is already in database or if any fuzzy match exists
+found_word = None
+if check_word_exists(word):
+    found_word = word
+else:
+    # check fuzzy matches
+    candidates = get_possible_matches(word)
+    for cand in candidates:
+        if check_word_exists(cand):
+            found_word = cand
+            break
 
-    # cook the soup
-    soup = BeautifulSoup(r.text, "html.parser")
+if not found_word:
+    try:
+        r = requests.get(f"https://www.verbformen.com/?w={word}")
+        if r.status_code == 429:
+            sys.stderr.write("Too many requests, slow down\n")
+            sys.exit(3)
 
-    # parse word descriptors
-    word, word_type, gender, regular, auxiliary, separable = parse_word_descriptors(soup)
+        # cook the soup
+        soup = BeautifulSoup(r.text, "html.parser")
 
-    # get definition, definition_id and type_id based on parsed descriptors
-    definition = parse_definition(soup)
-    definition_id = add_definition_to_database(definition)
-    type_id = get_type_id(word_type)
+        # parse word descriptors
+        scraped_word, word_type, gender, regular, auxiliary, separable = parse_word_descriptors(soup)
 
-    # add word to the database
-    gender_id = None
-    if word_type == 'verb':
-        add_word_to_database((word, gender_id, auxiliary, regular, separable, definition_id, type_id, 0, 1))
-        word_id = get_word_id(word)
+        if scraped_word is None:
+            # try to see if it was a fuzzy match case that we can retry with normalized input
+            # but the website usually handles redirects. if we are here,
+            # it means website returned something unparseable or 404-ish content.
+            # let's try to perform one search with normalized input if potential candidate is different
+            candidates = get_possible_matches(word)
+            success_retry = False
+            for cand in candidates:
+                if cand == word: continue
 
-        # conjugation part
-        conjugation_dict = parse_conjugation(soup)
-        add_conjugation_to_db(conjugation_dict, word_id)
+                sys.stderr.write(f"Word '{word}' not found, trying '{cand}'...\n")
+                r = requests.get(f"https://www.verbformen.com/?w={cand}")
+                if r.status_code == 200:
+                    soup = BeautifulSoup(r.text, "html.parser")
+                    scraped_word, word_type, gender, regular, auxiliary, separable = parse_word_descriptors(soup)
+                    if scraped_word:
+                        word = scraped_word # Update word to the successful candidate
+                        success_retry = True
+                        break
 
-        # initial sentences part
-        if args.openai:
-            openai_response = get_openai_response(word)
-            parsed_sentences = parse_openai_response(openai_response)
-            add_sentences_to_db(parsed_sentences, word_id)
-    elif word_type == 'noun':
-        gender_id = get_gender_id(gender)
-        add_word_to_database((word, gender_id, auxiliary, regular, separable, definition_id, type_id, 1, 0))
+            if not success_retry:
+                print(f"{RED}Word '{word}' not found.{RESET}")
+                sys.exit(1)
+        else:
+            word = scraped_word
 
-        word_id = get_word_id(word)
+        # get definition, definition_id and type_id based on parsed descriptors
+        definition = parse_definition(soup)
+        definition_id = add_definition_to_database(definition)
+        type_id = get_type_id(word_type)
 
-        if args.openai:
-            openai_response = get_openai_response(word)
-            parsed_sentences = parse_openai_response(openai_response)
-            add_sentences_to_db(parsed_sentences, word_id)
+        # add word to the database
+        gender_id = None
+        if word_type == 'verb':
+            add_word_to_database((word, gender_id, auxiliary, regular, separable, definition_id, type_id, 0, 1))
+            word_id = get_word_id(word)
 
-        # add declension to the database
-        declension_dict = parse_declension(soup)
-        add_declension_to_db(declension_dict, word_id)
+            # conjugation part
+            conjugation_dict = parse_conjugation(soup)
+            add_conjugation_to_db(conjugation_dict, word_id)
 
-    elif word_type == 'adjective':
-        add_word_to_database((word, gender_id, auxiliary, regular, separable, definition_id, type_id, 1, 0))
-    else:
-        print('unknown word type')
+            # initial sentences part
+            if args.openai:
+                openai_response = get_openai_response(word)
+                parsed_sentences = parse_openai_response(openai_response)
+                add_sentences_to_db(parsed_sentences, word_id)
+        elif word_type == 'noun':
+            gender_id = get_gender_id(gender)
+            add_word_to_database((word, gender_id, auxiliary, regular, separable, definition_id, type_id, 1, 0))
 
-    #print(parse_word_descriptors(soup))
+            word_id = get_word_id(word)
+
+            if args.openai:
+                openai_response = get_openai_response(word)
+                parsed_sentences = parse_openai_response(openai_response)
+                add_sentences_to_db(parsed_sentences, word_id)
+
+            # add declension to the database
+            declension_dict = parse_declension(soup)
+            add_declension_to_db(declension_dict, word_id)
+
+        elif word_type == 'adjective':
+            add_word_to_database((word, gender_id, auxiliary, regular, separable, definition_id, type_id, 1, 0))
+        else:
+            print('unknown word type')
+
+    except Exception as e:
+        sys.stderr.write(f"An error occurred while fetching information for '{word}': {e}\n")
+        sys.exit(1)
+else:
+    word = found_word
+
+#print(parse_word_descriptors(soup))
 
 word_type = get_word_type(word)
 if args.declension:

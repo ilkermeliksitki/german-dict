@@ -16,13 +16,27 @@ def _close_database(curr: Cursor, conn: Connection):
     curr.close()
 
 def _execute_query_with_fallback(curr, query, word):
-    # try exact match first, to prevent similar words to block each other
+    # try exact match first
     curr.execute(query, (word,))
     result = curr.fetchone()
-    if result is None:
-        # fallback to fuzzy match
-        curr.execute(query, ("%" + word + "%",))
-        result = curr.fetchone()
+    if result is not None:
+        return result
+
+    # fallback: word preceded by space (e.g. "der Wicht", "sich freuen")
+    curr.execute(query, ("% " + word,))
+    result = curr.fetchone()
+    if result is not None:
+        return result
+
+    # fallback: word followed by space (e.g. "Wicht (m)", "laufen gehen")
+    curr.execute(query, (word + " %",))
+    result = curr.fetchone()
+    if result is not None:
+        return result
+
+    # fallback: word surrounded by spaces (e.g. "Sich freuen auf")
+    curr.execute(query, ("% " + word + " %",))
+    result = curr.fetchone()
     return result
 
 def check_word_exists(word: str):

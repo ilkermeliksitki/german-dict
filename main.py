@@ -85,15 +85,24 @@ if not found_word:
         else:
             word = scraped_word
 
-        # get definition, definition_id and type_id based on parsed descriptors
+        # get definition, definition_id based on parsed descriptors
         definition = parse_definition(soup)
         definition_id = add_definition_to_database(definition)
-        type_id = get_type_id(word_type)
-
-        # add word to the database
         gender_id = None
+
+        # map string descriptors to integers
+        aux_map = {'haben': 0, 'sein': 1}
+        reg_map = {'regular': 1, 'irregular': 0}
+
+        # map values with default values to prevent crashes
+        aux_val = aux_map.get(auxiliary)
+        reg_val = reg_map.get(regular, 1)
+
         if word_type == 'verb':
-            add_word_to_database((word, gender_id, auxiliary, regular, separable, definition_id, type_id, 0, 1))
+            # type_id is brought here to prevent crashes when word_type is None
+            # same done for noun and adjective as well.
+            type_id = get_type_id(word_type)
+            add_word_to_database((word, gender_id, aux_val, reg_val, separable, definition_id, type_id, 0, 1))
             word_id = get_word_id(word)
 
             # conjugation part
@@ -106,8 +115,9 @@ if not found_word:
                 parsed_sentences = parse_openai_response(openai_response)
                 add_sentences_to_db(parsed_sentences, word_id)
         elif word_type == 'noun':
+            type_id = get_type_id(word_type)
             gender_id = get_gender_id(gender)
-            add_word_to_database((word, gender_id, auxiliary, regular, separable, definition_id, type_id, 1, 0))
+            add_word_to_database((word, gender_id, aux_val, reg_val, separable, definition_id, type_id, 1, 0))
 
             word_id = get_word_id(word)
 
@@ -121,7 +131,8 @@ if not found_word:
             add_declension_to_db(declension_dict, word_id)
 
         elif word_type == 'adjective':
-            add_word_to_database((word, gender_id, auxiliary, regular, separable, definition_id, type_id, 1, 0))
+            type_id = get_type_id(word_type)
+            add_word_to_database((word, gender_id, aux_val, reg_val, separable, definition_id, type_id, 1, 0))
         else:
             print('unknown word type')
 

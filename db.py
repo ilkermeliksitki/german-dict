@@ -47,20 +47,26 @@ def get_type_id(type_: str) -> int:
     curr.execute('SELECT id FROM types WHERE type = ?', (type_,))
     result = curr.fetchone()
     _close_database(curr, conn)
+    if result is None:
+        raise ValueError(f"Type '{type_}' not found in database")
     return result[0]
 
 def get_gender_id(gender: str) -> int:
+    if gender is None:
+        return None
     curr, conn = _open_database()
     curr.execute('SELECT id FROM genders WHERE gender = ?', (gender,))
     result = curr.fetchone()
     _close_database(curr, conn)
-    return result[0]
+    return result[0] if result else None
 
 def get_word_id(word):
     curr, conn = _open_database()
     curr.execute('SELECT id FROM words WHERE word LIKE ?', ("%" + word + "%",))
     result = curr.fetchone()
     _close_database(curr, conn)
+    if result is None:
+        raise ValueError(f"Word '{word}' not found in database via get_word_id")
     return result[0]
 
 def get_word_type(word):

@@ -332,17 +332,21 @@ def parse_declension(soup: BeautifulSoup):
     table1_html = soup.select_one("div.vDkl > div.vTbl:nth-of-type(1) > table").prettify()
     table2_html = soup.select_one("div.vDkl > div.vTbl:nth-of-type(2) > table").prettify()
 
+
     sgl = pd.read_html(StringIO(table1_html))[0]
     # concatenate the first and second columns
-    sgl.iloc[:, 1] = sgl.iloc[:, 1] + '  ' + sgl.iloc[:, 2]
+    if sgl.shape[1] > 2:
+        sgl.iloc[:, 1] = sgl.iloc[:, 1] + '  ' + sgl.iloc[:, 2]
 
     plr = pd.read_html(StringIO(table2_html))[0]
 
     # concatenate the first and second columns
-    plr.iloc[:, 1] = plr.iloc[:, 1] + '  ' + plr.iloc[:, 2]
+    if plr.shape[1] > 2:
+        plr.iloc[:, 1] = plr.iloc[:, 1] + '  ' + plr.iloc[:, 2]
 
     for i, case in enumerate(cases):
         declension_dict['singular'][case] = split_article_words(clean_form(sgl.iloc[i, 1]))
         declension_dict['plural'][case] = split_article_words(clean_form(plr.iloc[i, 1]))
 
     return declension_dict
+

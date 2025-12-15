@@ -87,6 +87,33 @@ def get_possible_matches(word: str) -> list:
 
     return list(set(candidates))
 
+def get_verb_variants(soup: BeautifulSoup) -> list:
+    """
+    Scans for variant links (e.g. 'haben' vs 'sein' forms) and returns a list of (label, url).
+    """
+    variants = []
+    # the variant buttons usually have class "rKnpf rNoSelect rLinks"
+    links = soup.select("a.rKnpf.rNoSelect.rLinks")
+
+    for link in links:
+        href = link.get('href')
+        if not href:
+            continue
+
+        # try to extract a meaningful label
+        # 1. look for span inside with title (e.g. <span title="auxiliary verb 'haben'">haben</span>)
+        span = link.select_one("span")
+        if span:
+            label = span.get_text(strip=True)
+        else:
+            # 2. fallback to title attribute of the <a> tag
+            label = link.get('title', '').strip()
+
+        full_url = "https://www.verbformen.com" + href if href.startswith("/") else href
+        variants.append((label, full_url))
+
+    return variants
+
 def parse_word_descriptors(soup: BeautifulSoup):
     """ parses word descriptors for identifying its name, type,
         gender (if it exists), regularity, and auxiliary (if it

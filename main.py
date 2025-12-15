@@ -56,6 +56,32 @@ if not found_word:
         # cook the soup
         soup = BeautifulSoup(r.text, "html.parser")
 
+        # check for variants (e.g. haben vs sein)
+        variants = get_verb_variants(soup)
+        if len(variants) > 1:
+            print(f"\n{BLUE}Multiple conjugation forms found:{RESET}")
+            for idx, (label, url) in enumerate(variants):
+                print(f"{idx + 1}: {label}")
+
+            try:
+                sel = input(f"\n{BLUE}Select form (default 1): {RESET}")
+                if not sel.strip():
+                    sel_idx = 0
+                else:
+                    sel_idx = int(sel) - 1
+
+                if 0 <= sel_idx < len(variants):
+                    selected_label, selected_url = variants[sel_idx]
+                    sys.stderr.write(f"Fetching {selected_label} form...\n")
+                    r = requests.get(selected_url)
+                    if r.status_code == 200:
+                        soup = BeautifulSoup(r.text, "html.parser")
+                    else:
+                        sys.stderr.write(f"Failed to fetch variant, using default.\n")
+
+            except ValueError:
+                print(f"{RED}Invalid input, using default.{RESET}")
+
         # parse word descriptors
         scraped_word, word_type, gender, regular, auxiliary, separable = parse_word_descriptors(soup)
 

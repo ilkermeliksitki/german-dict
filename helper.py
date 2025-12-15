@@ -198,7 +198,7 @@ def parse_conjugation(soup: BeautifulSoup):
             'future subj.'     : {},
             'fut. perf. subj.' : {}
         },
-        'conditional (würde)': {
+        'conditional': {
             'present cond.' : {},
             'past cond.'    : {}
         },
@@ -227,6 +227,8 @@ def parse_conjugation(soup: BeautifulSoup):
             mood = 'simple'
         else:
             mood = sec.select_one("header > h2").text.lower()
+            if 'conditional' in mood:
+                mood = 'conditional'
         for div in divs:
             # tense name is under h2 tag in the first div, and h2 tag in others
             if first_section:

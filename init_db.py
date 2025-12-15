@@ -16,7 +16,7 @@ def initialize_database():
     for pos in pos_ls:
         curr.execute("INSERT INTO types (type) VALUES (?)", (pos,))
 
-    moods = ['simple', 'indicative', 'subjunctive', 'contidional',
+    moods = ['simple', 'indicative', 'subjunctive', 'conditional',
              'imperative', 'infinitive/participle']
 
     for mood in moods:
@@ -31,3 +31,6 @@ def initialize_database():
     curr.close()
     conn.close()
     print('database is initialized')
+
+if __name__ == '__main__':
+    initialize_database()

@@ -95,18 +95,40 @@ def get_definition(definition_id):
     _close_database(curr, conn)
     return result[0]
 
-# for now, only simple tense is being added.
+def get_mood_id(mood: str, curr=None) -> int:
+    should_close = False
+    if curr is None:
+        curr, conn = _open_database()
+        should_close = True
+
+    curr.execute('SELECT id FROM moods WHERE mood LIKE ?', (mood,))
+    result = curr.fetchone()
+
+    if should_close:
+        _close_database(curr, conn)
+
+    if result is not None:
+        return result[0]
+    return -1
+
 def add_conjugation_to_db(conjugation_dict, word_id):
     curr, conn = _open_database()
-    simple_tense_dict = conjugation_dict['simple']
-    for tense in simple_tense_dict.keys():
-        for pronoun in simple_tense_dict[tense].keys():
-            conjugation = simple_tense_dict[tense][pronoun]
-            #print(tense, pronoun, conjugation, 'is added')
-            curr.execute(
-                "INSERT OR IGNORE INTO conjugations (tense, pronoun, conjugation, word_id, mood_id) VALUES (?, ?, ?, ?, ?)",
-                (tense, pronoun, conjugation, word_id, 1)
-            )
+
+    for mood_name, tenses in conjugation_dict.items():
+        mood_id = get_mood_id(mood_name, curr)
+        if mood_id == -1:
+            continue
+
+        for tense, pronouns in tenses.items():
+            for pronoun, conjugation in pronouns.items():
+                curr.execute("""
+                    INSERT OR IGNORE INTO conjugations
+                    (tense, pronoun, conjugation, word_id, mood_id)
+                    VALUES (?, ?, ?, ?, ?)
+                    """,
+                    (tense, pronoun, conjugation, word_id, mood_id)
+                )
+
     _close_database(curr, conn)
 
 def _pronoun_sort_key(item):
@@ -114,24 +136,57 @@ def _pronoun_sort_key(item):
     pronoun_order = ['ich', 'du', 'er', 'wir', 'ihr', 'sie', '0', '1']
     return pronoun_order.index(pronoun)
 
-def print_conjugation_of_verb(word, tense_id):
+def get_available_moods(word_id: int):
+    curr, conn = _open_database()
+    curr.execute("""
+        SELECT DISTINCT moods.id, moods.mood
+        FROM conjugations
+        JOIN moods ON conjugations.mood_id = moods.id
+        WHERE conjugations.word_id = ?
+        ORDER BY moods.id
+    """, (word_id,))
+    moods = curr.fetchall()
+    _close_database(curr, conn)
+    return moods
+
+def get_available_tenses(word_id: int, mood_id: int):
+    curr, conn = _open_database()
+    curr.execute("""
+        SELECT DISTINCT tense
+        FROM conjugations
+        WHERE word_id = ? AND mood_id = ?
+    """, (word_id, mood_id))
+    tenses = curr.fetchall()
+    _close_database(curr, conn)
+    return [t[0] for t in tenses]
+
+def print_conjugation_of_verb(word, mood_id, tense):
     curr, conn = _open_database()
     word_id = get_word_id(word)
-    tense_dict = {
-        1: 'present', 2: 'imperfect', 3: 'imperative', 4: 'present subj.',
-        5: 'imperf. subj.', 6: 'infinitive', 7: 'participle'
-    }
-    curr.execute('SELECT tense, pronoun, conjugation FROM conjugations WHERE word_id = ? and tense = ?',
-        (word_id, tense_dict[tense_id])
+
+    curr.execute("""
+        SELECT tense, pronoun, conjugation
+        FROM conjugations
+        WHERE word_id = ? and mood_id = ? and tense = ?
+    """,
+        (word_id, mood_id, tense)
     )
     conjugation_ls = curr.fetchall()
+
+    if not conjugation_ls:
+        print(f"{RED}No conjugation found for {tense} in this mood.{RESET}")
+        _close_database(curr, conn)
+        return
+
     # sort the list according to german pronouns
     conjugation_ls = sorted(conjugation_ls, key=_pronoun_sort_key)
+
+    print(f"\n{RED}Mood: {mood_id} | Tense: {tense}{RESET}")
     for index, conjugation_tuple in enumerate(conjugation_ls):
-        if index == 0:
-            print(RED + conjugation_tuple[0] + RESET)
         # if pronoun appears numeric, do not write down
         if not conjugation_tuple[1].isnumeric():
+             # Special padding for "ich", "du" vs "wir" etc?
+             # Just keep it consistent
             print(f"{BLUE + conjugation_tuple[1] + RESET:20} ", end='')
         print(f"{GREEN + conjugation_tuple[2] + RESET}")
     _close_database(curr, conn)

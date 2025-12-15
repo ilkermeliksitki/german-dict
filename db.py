@@ -25,7 +25,7 @@ def add_word_to_database(values: Tuple[str, str, str, str, str, str, str,]):
     #word, gender_id, auxiliary, regular, separable, definition_id, type_id = values
     # double check
     curr, conn = _open_database()
-    curr.execute('''INSERT INTO words
+    curr.execute('''INSERT OR IGNORE INTO words
                  (word, gender_id, auxiliary, regular, separable, definition_id, type_id, have_declension, have_conjugaison) 
                  VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)''', values)
     conn.commit()

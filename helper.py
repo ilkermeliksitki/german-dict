@@ -4,6 +4,54 @@ import pandas as pd
 from io import StringIO
 import re
 
+from escape_sequences import BLUE, RED, GREEN, RESET
+
+
+def print_aligned_conjugation_table(conjugation_list: list, col_padding: int = 4):
+    """
+    prints the conjugation table with aligned columns.
+    conjugation_list: list of tuples (tense, pronoun, conjugation)
+    """
+    if not conjugation_list:
+        return
+
+    # prepare rows 2D array, where each rows are:
+    # [ich, würde, gewesen, sein], [du, würdest, gewesen, sein], ...
+    rows = []
+    for _, pronoun, conjugation in conjugation_list:
+        if pronoun.isnumeric():
+            continue
+        parts = conjugation.split()
+        rows.append([pronoun] + parts)
+    if not rows:
+        return
+
+    # find the longest row length
+    num_columns = max(len(row) for row in rows)
+    col_widths = [0] * num_columns
+    for row in rows:
+        for i, item in enumerate(row):
+            if len(item) > col_widths[i]:
+                col_widths[i] = len(item)
+
+    # add padding buffer (the space between columns)
+    col_widths = [w + col_padding for w in col_widths]
+    for row in rows:
+        # pronoun (first column) is blue
+        pronoun = row[0]
+        cell_padding = col_widths[0] - len(pronoun)
+        if cell_padding < 0: cell_padding = 0
+        print(f"{BLUE}{pronoun}{RESET}{' ' * cell_padding}", end='')
+        
+        # conjugation parts (rest) are green
+        for i in range(1, len(row)):
+            item = row[i]
+            cell_padding = col_widths[i] - len(item)
+            if cell_padding < 0: cell_padding = 0
+            
+            print(f"{GREEN}{item}{RESET}{' ' * cell_padding}", end='')
+        print()
+    
 def get_possible_matches(word: str) -> list:
     """Generates possible umlaut variations for a given word."""
     candidates = [word]

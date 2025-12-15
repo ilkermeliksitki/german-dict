@@ -4,6 +4,7 @@ from sqlite3 import Cursor
 from sqlite3 import Connection
 
 from escape_sequences import *
+from helper import print_aligned_conjugation_table
 
 def _open_database(path='dictionary.db') -> Tuple[Cursor, Connection]:
     conn = sqlite3.connect(path)
@@ -182,13 +183,7 @@ def print_conjugation_of_verb(word, mood_id, tense):
     conjugation_ls = sorted(conjugation_ls, key=_pronoun_sort_key)
 
     print(f"\n{RED}Mood: {mood_id} | Tense: {tense}{RESET}")
-    for index, conjugation_tuple in enumerate(conjugation_ls):
-        # if pronoun appears numeric, do not write down
-        if not conjugation_tuple[1].isnumeric():
-             # Special padding for "ich", "du" vs "wir" etc?
-             # Just keep it consistent
-            print(f"{BLUE + conjugation_tuple[1] + RESET:20} ", end='')
-        print(f"{GREEN + conjugation_tuple[2] + RESET}")
+    print_aligned_conjugation_table(conjugation_ls)
     _close_database(curr, conn)
 
 def print_declension_of_noun(word):

@@ -45,6 +45,27 @@ def check_word_exists(word: str):
     _close_database(curr, conn)
     return result is not None
 
+def get_fuzzy_matches(word: str):
+    """
+    returns a list of (id, word) tuples for all matches found using stricter logic.
+    """
+    curr, conn = _open_database()
+    matches = set()
+    query = 'SELECT id, word FROM words WHERE word LIKE ?'
+
+    # check all patterns
+    patterns = [word, "% " + word, word + " %", "% " + word + " %"]
+
+    for pat in patterns:
+        curr.execute(query, (pat,))
+        rows = curr.fetchall()
+        for row in rows:
+            matches.add(row)
+
+    _close_database(curr, conn)
+    # sort by length then alphabetically to show exact matches first usually
+    return sorted(list(matches), key=lambda x: (len(x[1]), x[1]))
+
 def add_word_to_database(values: Tuple[str, str, str, str, str, str, str,]):
     #word, gender_id, auxiliary, regular, separable, definition_id, type_id = values
     # double check

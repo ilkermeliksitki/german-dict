@@ -36,15 +36,51 @@ word = args.word.strip()
 
 # validates if word is already in database or if any fuzzy match exists
 found_word = None
-if check_word_exists(word):
-    found_word = word
+# use fuzzy matches to find all variants
+matches = get_fuzzy_matches(word) # (id, word)
+
+if matches:
+    # check for single exact match to avoid friction
+    if len(matches) == 1 and matches[0][1].lower() == word.lower():
+        found_word = matches[0][1]
+    else:
+        # check for haben and sein variants, and show add option accordingly
+        has_haben = any('(haben)' in m[1] for m in matches)
+        has_sein = any('(sein)' in m[1] for m in matches)
+        show_add = not (has_haben and has_sein)
+
+        print(f"\n{BLUE}Found matches:{RESET}")
+        for idx, (mid, mword) in enumerate(matches):
+            print(f"{idx + 1}: {mword}")
+
+        if show_add:
+            print(f"{len(matches) + 1}: Search online / Add new")
+
+        try:
+            sel = input(f"\n{BLUE}Select option (default 1): {RESET}")
+            if not sel.strip():
+                sel_idx = 0
+            else:
+                sel_idx = int(sel) - 1
+
+            if 0 <= sel_idx < len(matches):
+                found_word = matches[sel_idx][1]
+            elif show_add and sel_idx == len(matches):
+                # user chose to search online
+                found_word = None
+            else:
+                # invalid match choice
+                found_word = matches[0][1]
+        except ValueError:
+            found_word = matches[0][1] # Default to first match on error
 else:
-    # check fuzzy matches
     candidates = get_possible_matches(word)
     for cand in candidates:
-        if check_word_exists(cand):
-            found_word = cand
+        matches = get_fuzzy_matches(cand)
+        if matches:
+            found_word = matches[0][1]
             break
+
 
 if not found_word:
     try:
@@ -58,6 +94,8 @@ if not found_word:
 
         # check for variants (e.g. haben vs sein)
         variants = get_verb_variants(soup)
+
+        selected_label = None
         if len(variants) > 1:
             print(f"\n{BLUE}Multiple conjugation forms found:{RESET}")
             for idx, (label, url) in enumerate(variants):
@@ -71,43 +109,25 @@ if not found_word:
                     sel_idx = int(sel) - 1
 
                 if 0 <= sel_idx < len(variants):
+                    # selected label: sein or haben
                     selected_label, selected_url = variants[sel_idx]
-                    sys.stderr.write(f"Fetching {selected_label} form...\n")
+                    sys.stdout.write(f"Fetching {selected_label} form...\n")
                     r = requests.get(selected_url)
                     if r.status_code == 200:
                         soup = BeautifulSoup(r.text, "html.parser")
                     else:
-                        sys.stderr.write(f"Failed to fetch variant, using default.\n")
-
+                         sys.stderr.write(f"Failed to fetch variant, using default.\n")
             except ValueError:
                 print(f"{RED}Invalid input, using default.{RESET}")
 
         # parse word descriptors
         scraped_word, word_type, gender, regular, auxiliary, separable = parse_word_descriptors(soup)
 
-        if scraped_word is None:
-            # try to see if it was a fuzzy match case that we can retry with normalized input
-            # but the website usually handles redirects. if we are here,
-            # it means website returned something unparseable or 404-ish content.
-            # let's try to perform one search with normalized input if potential candidate is different
-            candidates = get_possible_matches(word)
-            success_retry = False
-            for cand in candidates:
-                if cand == word: continue
-
-                sys.stderr.write(f"Word '{word}' not found, trying '{cand}'...\n")
-                r = requests.get(f"https://www.verbformen.com/?w={cand}")
-                if r.status_code == 200:
-                    soup = BeautifulSoup(r.text, "html.parser")
-                    scraped_word, word_type, gender, regular, auxiliary, separable = parse_word_descriptors(soup)
-                    if scraped_word:
-                        word = scraped_word # Update word to the successful candidate
-                        success_retry = True
-                        break
-
-            if not success_retry:
-                print(f"{RED}Word '{word}' not found.{RESET}")
-                sys.exit(1)
+        # update word name if a specific variant was selected to distinguish it in db
+        if selected_label:
+            # e.g. "fliegen" -> "fliegen (sein)" or "fliegen (haben)"
+            if '(' not in word: # prevent double tagging if user typed "fliegen (sein)"
+                word = f"{scraped_word} ({selected_label})"
         else:
             word = scraped_word
 
@@ -167,8 +187,6 @@ if not found_word:
         sys.exit(1)
 else:
     word = found_word
-
-#print(parse_word_descriptors(soup))
 
 word_type = get_word_type(word)
 if args.declension:

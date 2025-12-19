@@ -1,5 +1,7 @@
 #!/bin/bash
 
+set -euo pipefail # exit on error, undefined variable, or error in pipeline
+
 OWNER="ilkermeliksitki"
 REPO="german-dict"
 PROJECT=5

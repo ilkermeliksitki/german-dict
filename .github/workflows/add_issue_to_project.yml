@@ -1,0 +1,20 @@
+name: Add issue to project automation
+
+on:
+  issues:
+    types: [opened]
+  workflow_dispatch:
+
+jobs:
+  on_issue_opened:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v2
+      
+      - name: Add issue to project
+        run: |
+          bash .github/workflows/add-issue-to-project/add_issue_to_project.sh
+        env:
+          GH_TOKEN: ${{ secrets.PERSONAL_ACCESS_TOKEN }}
+
